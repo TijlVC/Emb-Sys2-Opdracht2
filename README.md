@@ -1,117 +1,166 @@
-# Opdracht 2 GTK + MQTT + PJ_RPI_USER
+# **Opdracht 2: GTK + MQTT + PJ_RPI_USER**
 
-Deze opdracht bestaat uit een basis gedeelte en een mogelijke uitbereiding.
+Deze opdracht bestaat uit een basisgedeelte en een mogelijke uitbreiding.
 
 ---
 
-## Basis
+## **1. Basis**
 
-### Deel 1:
-**GTK programma maken waarmee:**:  
-    -  Enkele GPIO'skan lezen en schrijven.  
-    -  Maak het mogelijk om de IO'ste kiezen.  
+### **Deel 1: GTK Programma**
+Het programma moet:  
+- Enkele GPIO's kunnen lezen en schrijven.  
+- De mogelijkheid bieden om de gewenste IO’s te kiezen.  
 
-### Deel 2:
+### **Deel 2: MQTT en Node-RED**
+#### **MQTT met Paho Library**
+- De temperatuur van de TC74-sensor via MQTT ontvangen en naar GTK sturen voor visualisatie.  
+- Gebruik maken van de Paho-library om gegevens te ontvangen en te verzenden.  
 
-**MQTT met Paho lib**:
-    - De temperatuur van de TC74 sensor via MQTT wordt ontvangen om naar de GTK te versturen voor visualisatie  
-    - Ontvangen en versturen met de Paho lib om te kunnen visualiseren  
+#### **Node-RED**
+- De temperatuur via Node-RED publiceren.  
 
-**Node-Red**
-    - Publiceren van de temperatuur via Node-Red  
+---
 
-## Uitbereiding:
+## **2. Uitbreiding (Optioneel)**
 
-**Timer voorzien**
-    - De output laten togglen via een timer met instelbare periode (GTK)  
+### **✅ Timer Functie**
+- De output laten togglen via een instelbare timer in GTK.  
 
-**Start Service**
-    - Een service maken in C die kan gestart worden met systemctl  
-    -> de service dient om de temperatuur van de TC74 via MQTT met de paho lib te publiceren.  
+### **✅ Start Service**
+- Een C-service maken die gestart kan worden met `systemctl`.  
+- Deze service publiceert de temperatuur van de TC74 via MQTT met behulp van de Paho-library.  
 
-# Build & Run
+---
 
-1. Installeer eerst GTK3:
-   ```commandline :
-   sudo apt-get update
-   sudo apt-get install libgtk-3-dev
-   ````  
+## **3. Build & Run**
 
-2. Installeer PJ_RPI_USER (zie hans-naert/PJ_RPI_USER)
-    - Hiermee heb je /dev/gpiomem voor directe GPIO-toegang zonder sudo.  
+### **📌 Stap 1: Installeer vereisten**
+#### **Installeer GTK3**
+```bash
+sudo apt-get update
+sudo apt-get install libgtk-3-dev
+```
 
-3. Installeer Paho MQTT
-    ```bash
-    git clone https://github.com/eclipse/paho.mqtt.c.git
-    cd paho.mqtt.c
-    cmake -Bbuild -H.
-    sudo cmake --build build/ --target install
-    sudo ldconfig
-    ````  
+#### **Installeer PJ_RPI_USER**
+- Volg de instructies van de repository: [hans-naert/PJ_RPI_USER](https://github.com/hans-naert/PJ_RPI_USER).  
+- Hiermee krijg je directe toegang tot `/dev/gpiomem` zonder `sudo`.  
 
-4. Builden: 
-    ```bash
-    mkdir build
-    cd build
-    cmake ..
-    make
-    ````  
+#### **Installeer Paho MQTT**
+```bash
+git clone https://github.com/eclipse/paho.mqtt.c.git
+cd paho.mqtt.c
+cmake -Bbuild -H.
+sudo cmake --build build/ --target install
+sudo ldconfig
+```
 
-5. Uitvoeren :
-    ```bash
-    ./opdracht2
-    ````  
+---
 
-6. Indien Node-red nog niet operationeel kun je MQTT testen : (in een andere terminal)
-    ```bash
-    mosquitto_pub -t tc74/temperature -m "25"
-    ````
-*hiermee push je manueel een mqtt bericht.*  
+### **📌 Stap 2: Builden**
+```bash
+mkdir build
+cd build
+cmake ..
+make
+```
 
-## GPIO Werking
+---
 
-**In de GUI kun je:**  
-    - Input pin (BCM): Voer het BCM-nummer in (bijv. 27) en klik op “Read” om de huidige status (0 of 1) te lezen.  
-    - Wil je een stabiel signaal, configureer dan een pull-up of pull-down, bv  
-    ```bash    
-    sudo raspi-gpio set 27 pu  
-    ````  
-    - Output pin (BCM): Voer een BCM-nummer in (bijv. 17) en klik op “Toggle” om de pin hoog/laag te zetten.  
-    - Het label in de GUI toont of de pin “HIGH” of “LOW” is.  
-    Gebruik indien nodig een LED + weerstand of een andere schakeling om de stand te zien.  
+### **📌 Stap 3: Uitvoeren**
+```bash
+./opdracht2
+```
 
-*Zo kun je vrij bepalen welke pinnen je als input of output gebruikt.*
+---
 
-## Node-RED Flow (TC74-sensor)
+### **📌 Stap 4: MQTT testen (indien nodig)**
+Indien Node-RED nog niet operationeel is, kun je handmatig een MQTT-bericht verzenden:  
+```bash
+mosquitto_pub -t tc74/temperature -m "25"
+```
+*Hiermee push je handmatig een MQTT-bericht.*
 
-Om de TC74 temperatuur live te publiceren naar MQTT (topic `tc74/temperature`), kun je Node-RED als volgt configureren (op de Raspberry Pi):
+---
 
-1. **Start Node-RED**:
-   ```bash
-   node-red
-   ´´´´  
-(of gebruik ´´´commandline : sudo systemctl start nodered ´´´´)
+## **4. GPIO Werking**
 
-2. **OPen de flow-editor in je browser:**
-    ´´´bash
-    http://<IP-van-je-Pi>:1880
-    ´´´´  
+### **📌 Input Pins (BCM)**
+- Voer het BCM-nummer in (bijv. 27) en klik op “Read” om de huidige status (0 of 1) te lezen.  
+- Wil je een stabiel signaal? Configureer een pull-up of pull-down:  
+  ```bash
+  sudo raspi-gpio set 27 pu
+  ```
 
-3. Maak een nieuw flow aan met volgende nodes in deze volgorde:
-    - Inject node "msg.payload" als STRING met een (repeat 5s). Verbind deze met een Exec node  
-    - Exec node met als command: ´´´commandline : i2cget -y 1 0x48 ´´´´ en Output 'when the command is complete - exec mode'  
-    - Deze exec is dan verbonden met een functie-node : noem deze bv: "Omzetting hex to integer"  
-    ´´´bash
-	// Extract hexadecimal value from output
-	let tempHex = msg.payload.trim();  
+### **📌 Output Pins (BCM)**
+- Voer een BCM-nummer in (bijv. 17) en klik op “Toggle” om de pin hoog of laag te zetten.  
+- Het label in de GUI toont of de pin “HIGH” of “LOW” is.  
+- Gebruik indien nodig een LED + weerstand of een andere schakeling om de stand te verifiëren.  
 
-	// Convert hex (e.g., "0x1A") to integer
-	let tempC = parseInt(tempHex, 16);  
+---
 
-	// Set the formatted payload
-	msg.payload = tempC;  
-	
-	return msg;  
-	´´´´  
-    - Deze functienode is dan verbonden met een mqtt-out-node met als instelling 'server: localhost  Port:1883'  
-    - druk rechtsbovenaan op deploy om de flow te starten.  
+## **5. Node-RED Flow (TC74-sensor)**
+
+De TC74-temperatuur live publiceren naar MQTT (topic `tc74/temperature`) via Node-RED:
+
+### **📌 Stap 1: Start Node-RED**
+```bash
+node-red
+```
+*(Of gebruik: `sudo systemctl start nodered`)*  
+
+---
+
+### **📌 Stap 2: Open de Node-RED flow-editor**
+Open de browser en ga naar:  
+```bash
+http://<IP-van-je-Pi>:1880
+```
+
+---
+
+### **📌 Stap 3: Flow Configureren**
+Maak een nieuwe flow en voeg de volgende nodes toe:
+
+1. **Inject Node**:  
+   - Type: `msg.payload` als STRING  
+   - Interval: Elke `5 seconden`  
+
+2. **Exec Node**:  
+   - Command:  
+     ```bash
+     i2cget -y 1 0x48
+     ```
+   - Output: "When the command is complete - exec mode"
+
+3. **Functie Node** (Naam: "Omzetting hex naar integer"):  
+   ```javascript
+   // Hexadecimale waarde omzetten naar integer
+   let tempHex = msg.payload.trim();
+   let tempC = parseInt(tempHex, 16);
+   
+   // Formatteerde waarde doorsturen
+   msg.payload = tempC;
+   
+   return msg;
+   ```
+
+4. **MQTT Out Node**:  
+   - Instellen op `Server: localhost`  
+   - Poort: `1883`  
+
+5. **Deploy**:  
+   - Klik rechtsboven op "Deploy" om de flow te starten.  
+
+---
+
+### **✅ Extra Tips**
+- Controleer of `mosquitto` draait met:
+  ```bash
+  sudo systemctl status mosquitto
+  ```
+- Je kunt MQTT-berichten live monitoren met:
+  ```bash
+  mosquitto_sub -t "tc74/temperature"
+  ```
+
+---

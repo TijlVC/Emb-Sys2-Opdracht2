@@ -1,0 +1,3 @@
+/home/tijl/embed2/opdrachten/opdracht_2_prive_v1/build/CMakeFiles/opdracht2.dir
+/home/tijl/embed2/opdrachten/opdracht_2_prive_v1/build/CMakeFiles/edit_cache.dir
+/home/tijl/embed2/opdrachten/opdracht_2_prive_v1/build/CMakeFiles/rebuild_cache.dir
